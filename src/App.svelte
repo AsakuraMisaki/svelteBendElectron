@@ -1,6 +1,8 @@
 <!-- App.svelte -->
 <script>
+  
   import MyComponent from './MyComponent.svelte';
+  
 </script>
 
 <div>

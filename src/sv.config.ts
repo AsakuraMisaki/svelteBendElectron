@@ -1,5 +1,6 @@
 import { BuildOptions } from "./types";
 
+
 export default ({
   bundle: true,
   entryPoints: ["src/App.svelte"],
