@@ -1,9 +1,7 @@
 import { BuildOptions } from "./types";
-export declare type Types = {
-  a:Date, 
-  b:number
-  target:string
-  c:CustomClass
+export declare class A {
+  init(aaa:any, bbb:any):any
+  
 }
 // export default ({
 //   bundle: true,

@@ -40,8 +40,11 @@
     "typescript": "^5.7.3"
   },
   "dependencies": {
+    "acorn": "^8.14.0",
     "esbuild": "^0.25.0",
     "esbuild-svelte": "^0.9.0",
+    "esprima": "^4.0.1",
+    "estraverse": "^5.3.0",
     "superjson": "^2.2.2",
     "svelte": "^5.20.4",
     "svelte-preprocess": "^6.0.3",
