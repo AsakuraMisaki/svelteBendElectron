@@ -12,5 +12,5 @@ export default ({
   write: false,
   external: ["pixi.js", "pixi.mjs"],
   outdir: "out",
-  minify: true,
+  // minify: true,
 } as BuildOptions);

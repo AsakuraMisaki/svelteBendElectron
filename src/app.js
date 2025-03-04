@@ -1,6 +1,6 @@
 import { Application } from "./pixi.mjs";
 // import { default as App } from "../out/eee.js";
-import {render} from "../out/eee.js";
+import {render, GlobalContext} from "../out/eee.js";
 class R{
   static create(){
     const app = new Application(
@@ -9,9 +9,10 @@ class R{
         background: 0xffffff
       }
     )
-    globalThis.myStage = app.stage;
     document.body.appendChild(app.view);
-    
+    let ctx = new GlobalContext();
+    ctx.stage = app.stage;
+    GlobalContext.current = ctx;
     this.com();
   }
   static com(){

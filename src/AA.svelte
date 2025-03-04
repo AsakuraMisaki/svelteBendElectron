@@ -1,8 +1,8 @@
 <script>
   import { onMount } from "svelte";
-  import { SDK } from "./sdk";
+  
   import Sprite from "./Sprite.svelte";
-  import Transform from "./Transform.svelte";
+  
   import Text from "./Text.svelte";
   let items = $state([{x:0}]);
   let fps = $state(16);

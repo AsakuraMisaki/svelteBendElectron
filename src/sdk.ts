@@ -13,22 +13,9 @@ import
   BaseTexture 
 } 
 from "pixi.js";
+import { getContext, setContext } from "svelte";
 
 
-// if(!RenderTexture){ // import fail
-//   const { 
-//     RenderTexture, 
-//     TextStyle, 
-//     Text, 
-//     Rectangle, 
-//     Sprite, 
-//     Texture, 
-//     Transform, 
-//     Container, 
-//     DisplayObject, 
-//     BaseTexture 
-//   } = globalThis.PIXI;
-// }
 
 class SDK {
   static async safeLoad(url:string){
@@ -53,7 +40,10 @@ class SDK {
     })
   }
   static stage(){
-    return globalThis.myStage;
+    if(typeof(GlobalContext.current.stage) == "function"){
+      return GlobalContext.current.stage();
+    }
+    return GlobalContext.current.stage;
   }
 }
 
@@ -151,6 +141,22 @@ class ComponentEV{
 const ContextEV = {
   TransformChanged: "transform:changed"
 }
+const ContextKEY = {
+  _Container: Symbol("_Container")
+}
+class GlobalContext{
+  static _current: GlobalContext;
+  static set current(_:GlobalContext){
+    this._current = _;
+  }
+  static get current(){
+    return this._current || new GlobalContext();
+  }
+  stage: ()=>DisplayObject | DisplayObject
+  constructor(){}
+}
+
+
 
 const globalEVS = new Map();
 
@@ -169,10 +175,47 @@ class _Transform extends Transform{
   }
 }
 
+class Mounter{
+  key: Symbol
+  target: DisplayObject
+  _onMount: (...args:any)=>void | null
+  constructor(target:DisplayObject, key=ContextKEY._Container){
+    this.key = key;
+    this.target = target;
+  }
+  static create(target:DisplayObject, key=ContextKEY._Container){
+    return new Mounter(target, key).prepare();
+  }
+  prepare(){
+    setContext(this.key, this.target);
+    return this;
+  }
+  onMount(cb:(...args:any)=>void){
+    this._onMount = cb;
+  }
+  async mount(){
+    // if(typeof(this._onMount) == "function" && isAsyncFunction(this._onMount)){
+    //   this._onMount();
+    // }
+    this._mount();
+  }
+  _mount(){
+    return;
+    const parent = getContext(this.key) as Container;
+    if(parent){
+      parent.addChild(this.target);
+    }
+    else if(SDK.stage()){
+      (SDK.stage() as Container).addChild(this.target);
+    }
+  }
+}
+
+
 class _Container extends Container{
   constructor(){
     super();
-    this.transform = new _Transform(this);
+    this.transform = new _Transform(this as DisplayObject);
   }
 }
 
@@ -180,7 +223,7 @@ class _Container extends Container{
 class _Text extends Text{
   constructor(...args:any[]){
     super(...args);
-    this.transform = new _Transform(this);
+    this.transform = new _Transform(this as DisplayObject);
   }
 }
 
@@ -188,7 +231,7 @@ class _Text extends Text{
 class _Sprite extends Sprite{
   constructor(...args:any[]){
     super(...args);
-    this.transform = new _Transform(this);
+    this.transform = new _Transform(this as DisplayObject);
   }
 }
 
@@ -209,7 +252,10 @@ export
   Timer,
   ComponentEV,
   ContextEV,
-  globalEVS
+  globalEVS,
+  Mounter,
+  GlobalContext,
+  ContextKEY
 }
 
 
