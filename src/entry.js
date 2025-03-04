@@ -8,6 +8,7 @@ const sveltePlugin = require("esbuild-svelte");
 const path = require("path");
 const sveltePreprocess = require("svelte-preprocess");
 const { log } = require("./env.js");
+const { writeFileSync } = require("fs");
 // const svelte = require("svelte");
 
 // // console.log(svelte);
@@ -20,7 +21,7 @@ const { log } = require("./env.js");
 
 // console.log(svelte.SvelteComponent);
 
-const buildCode = async function(argv){
+const buildCode = async function(argv, cb){
   argv.plugins = [
     sveltePlugin({
       preprocess: sveltePreprocess(),
@@ -30,12 +31,20 @@ const buildCode = async function(argv){
     const result = await esbuild.build(argv);
     const outputFiles = result.outputFiles || []; // 获取输出文件内容
     let codes = {};
+    
     outputFiles.forEach(file => {
+      const result = file.text.toString().replace(/from\s*\"pixi.js\"/, `from"./pixi.mjs"`);
+      
+      writeFileSync(file.path, result);
+      console.log(file.path);
       codes[path.basename(file.path).replace(path.extname(file.path), "")] = file.text.toString();
       // console.log(`--- Output for ${file.path} ---`);
       // console.log(file.contents.toString()); // 输出代码字符串
     });
     log(JSON.stringify(codes));
+    if(cb){
+      cb();
+    }
     // process.exit(1);
   }
   catch(e){

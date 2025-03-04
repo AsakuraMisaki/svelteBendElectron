@@ -9,7 +9,7 @@ if(publish){
   process.chdir(path.dirname(process.execPath));
 }
 
-const main = async function(){
+const main = async function(cb){
   
   log(process.execPath + "\n" + process.cwd() + "\n" + JSON.stringify(process.argv));
   
@@ -45,12 +45,14 @@ const main = async function(){
       
       const configObj = new Function(`${text}`)();
       log(JSON.stringify(configObj));
-      buildCode(configObj);
+      buildCode(configObj, cb);
     }
   }catch(e){
     console.error(e);
     process.exit(0);
   }
 } 
+
+// main();
 
 module.exports = { main };

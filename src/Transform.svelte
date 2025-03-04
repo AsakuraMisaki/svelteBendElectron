@@ -1,19 +1,23 @@
 <script lang="ts">
-  import { ContextEV, EV, SDK } from "./PIXIcontext";
+  import { getContext, onMount, setContext } from "svelte";
+  import { Container, SDK } from "./sdk";
+
+  // svelte层级: pixi层级
+  export let target:Container = null;
+
+  setContext("target", target);
   
-  export let x = 0;
-  export let y = 0;
-  export let width = 0;
-  export let height = 0;
-  export let scale = {
-    x: 1,
-    y: 1
-  }
-  export class Timer{
-    static delta: number
-    static lastDelta: number
-  }
+  onMount(()=>{
+    console.warn("????????");
+    const parent = getContext("target") as Container;
+    if(parent){
+      parent.addChild(target);
+    }
+    
+  })
   
 </script>
 
-<slot />
+<slot/>
+<!-- <slot /> -->
+<!-- <slot /> -->

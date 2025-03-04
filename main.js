@@ -1,16 +1,49 @@
 const { app, BrowserWindow } = require('electron/main')
 const { main } = require('./src')
+const chokidar = require('chokidar');
+const path = require('path');
 const { Helper } = require('./src/argvHelper')
+let changing = false;
+const watch = (win)=>{
+  const watchPaths = [
+    path.resolve(__dirname, 'src'),
+  ];
+  console.log(watchPaths);
+  // 监听文件变化
+  const watcher = chokidar.watch(watchPaths, {
+    ignored: /node_modules/,
+    persistent: true
+  });
+  
+  
+  watcher.on('change', (filePath) => {
+    if(changing) return;
+    changing = true;
+    console.log(`\nFile changed: ${filePath}`);
+    try{
+      main(()=>{
+        win.reload();
+        changing = false;
+      })
+    }catch(e){
+      console.error(e);
+      process.exit(0);
+    }
+  });
+}
 
 const createWindow = () => {
   const win = new BrowserWindow({
-    width: 800,
+    width: 1700,
     height: 600
   })
-
+  
   win.loadFile('index.html')
   win.webContents.toggleDevTools();
+  watch(win);
 }
+
+
 
 app.whenReady().then(() => {
   // command mode
@@ -22,13 +55,23 @@ app.whenReady().then(() => {
     process.exit(1);
   }
   else{
-    commonCreate();
+    try{
+      main(()=>{
+        commonCreate();
+      })
+    }catch(e){
+      console.error(e);
+      process.exit(0);
+    }
+    
+    
   }
+  
+  
 })
 
 const commonCreate = function(){
   createWindow()
-  
   // main();
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {

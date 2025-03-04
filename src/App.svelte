@@ -1,21 +1,44 @@
-<!-- App.svelte -->
 <script>
-  import { onMount } from 'svelte';
-  
-  import MyComponent from './Button.svelte';
-    import Button from './Button.svelte';
-    import Layout, { Types } from './Layout.svelte';
-  
-  onMount(()=>{
-
+    import { onMount } from "svelte";
+    import { SDK } from "./sdk";
+    import Sprite from "./Sprite.svelte";
+    import Transform from "./Transform.svelte";
+    import Text from "./Text.svelte";
+    let items = $state([{x:0}]);
+    let fps = $state(16);
+  let now = performance.now();
+  const targetTick = 16;
+  let tick = targetTick;
+  const targetIcons = ["icon", "icon1", "icon2"];
+  let t = ()=>{
+    let lNow = performance.now();
+    const ms = Math.floor(lNow - now);
+    fps = Math.floor(1000 / ms);
+    now = lNow;
+    tick -= ms;
+    if(tick <= 0){
+      const _item = {x:items.length * 20, url:`./src/${targetIcons[Math.floor(Math.random() * (targetIcons.length))]}.png`}
+      items.push(_item);
+      tick = targetTick;
+    }
+    requestAnimationFrame(t);
+  }
+	onMount(()=>{
+    requestAnimationFrame(t);
   })
+  
+  
+  
+  
 </script>
 
 <div>
-  <Layout>
-
-  </Layout>
-  <Button url={"./img/system/IconSet.png"}>
-    <Button url={"./img/system/Window.png"}></Button>
-  </Button>
+  
+  {#each items as item}
+    <Sprite url={item.url || "./src/icon.png"} x={item.x}>
+      
+    </Sprite>
+  {/each}
+  <Text y={300} text={`FPS:${fps}  ${items.length}`}/>
 </div>
+

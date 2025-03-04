@@ -1,15 +1,3 @@
-export let _$_gameMap:Game_Map = new Game_Map();
-
-export declare class Game_Map{
-  autoplay:()=>any;
-}
-export declare class Scene_Map {
-  onTransferEnd:()=>any;
-}
-
-export let a = _$_gameMap.autoplay() as Scene_Map;
-
-
 interface CommonOptions {
   /** Documentation: https://esbuild.github.io/api/#sourcemap */
   sourcemap?: boolean | 'linked' | 'inline' | 'external' | 'both'

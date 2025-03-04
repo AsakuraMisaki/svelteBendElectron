@@ -1,15 +1,12 @@
 <script>
   import { onMount } from "svelte";
 
-  export let url = "./img/system/IconSet.png";
-  onMount(() => {
-    let sprite = new PIXI.Sprite(PIXI.Texture.from(url));
-    if (/iconset/i.test(url)) {
-      sprite.x = 200;
-    }
-    SceneManager._scene.addChild(sprite);
-    console.warn(url);
-  });
+  export let checked = null;
+  export let unchecked = null;
+  
+  onMount(()=>{
+    return ()=>{}
+  })
 </script>
 
 <slot />

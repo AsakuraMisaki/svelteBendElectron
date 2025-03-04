@@ -1,26 +1,68 @@
 
-import { Rectangle, Sprite, Texture, Transform, Container } from "pixi.js";
-abstract class PIXI { 
-  static Rectangle: any
-  static Sprite: any
-  static Text: any
-  static TextStyle: any
-  static Texture: any
-  static BaseTexture: any
-  static RenderTexture: any
-  static Container: any
-  static DisplayObject: any
-  static EventEmitter: any
+import 
+{ 
+  RenderTexture, 
+  TextStyle, 
+  Text, 
+  Rectangle, 
+  Sprite, 
+  Texture, 
+  Transform, 
+  Container, 
+  DisplayObject, 
+  BaseTexture 
+} 
+from "pixi.js";
+
+
+// if(!RenderTexture){ // import fail
+//   const { 
+//     RenderTexture, 
+//     TextStyle, 
+//     Text, 
+//     Rectangle, 
+//     Sprite, 
+//     Texture, 
+//     Transform, 
+//     Container, 
+//     DisplayObject, 
+//     BaseTexture 
+//   } = globalThis.PIXI;
+// }
+
+class SDK {
+  static async safeLoad(url:string){
+    const base = BaseTexture.from(url, {});
+    return await this.checkRes(base, ()=>{
+      return base.valid;
+    })
+  }
+  static checkRes(res:any, checker){
+    const c = (resolve)=>{
+      const st = checker();
+      if(!st){
+        setTimeout(()=>c(resolve), 100);
+      }
+      else{
+        resolve(res);
+        return true;
+      }
+    }
+    return new Promise((resolve, reject)=>{
+      setTimeout(()=>c(resolve), 100);
+    })
+  }
+  static stage(){
+    return globalThis.myStage;
+  }
 }
 
-abstract class SDK {
-  static safeLoad:(url:string) => Promise<any>
-}
 
-class Timer{
+abstract class Timer{
   static delta: number
   static lastDelta: number
 }
+
 
 type EVtype = {
   z: number
@@ -105,30 +147,69 @@ class ComponentEV{
     }
   }
 }
-const EV = new ComponentEV();
 
 const ContextEV = {
   TransformChanged: "transform:changed"
 }
 
+const globalEVS = new Map();
+
+
 class _Transform extends Transform{
-  _scopeContainer: Container
-  protected onChange(): void {
+  constructor(s:DisplayObject){
+    super();
+    this._scopeObject = s;
+  }
+  _scopeObject: DisplayObject
+  onChange(): void {
     super.onChange();
-    EV.emit(ContextEV.TransformChanged, this._scopeContainer);
+    globalEVS.forEach((value:any, key:DisplayObject)=>{
+      key.emit(ContextEV.TransformChanged, this._scopeObject);
+    })
   }
 }
 
 class _Container extends Container{
-  
-}
-
-class _Sprite extends Sprite{
-  constructor(...args){
-    super(...args);
-    this.transform = new Transform();
+  constructor(){
+    super();
+    this.transform = new _Transform(this);
   }
 }
 
-export { PIXI, SDK, Timer, ComponentEV, EV, ContextEV, _Transform, _Sprite, _Container };
+
+class _Text extends Text{
+  constructor(...args:any[]){
+    super(...args);
+    this.transform = new _Transform(this);
+  }
+}
+
+
+class _Sprite extends Sprite{
+  constructor(...args:any[]){
+    super(...args);
+    this.transform = new _Transform(this);
+  }
+}
+
+export 
+{ 
+  RenderTexture, 
+  TextStyle, 
+  _Text, 
+  Rectangle,
+  _Sprite, 
+  Texture, 
+  _Transform, 
+  _Container, 
+  Container,
+  DisplayObject, 
+  BaseTexture,
+  SDK,
+  Timer,
+  ComponentEV,
+  ContextEV,
+  globalEVS
+}
+
 
