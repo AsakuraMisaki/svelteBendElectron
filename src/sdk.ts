@@ -18,6 +18,18 @@ import { getContext, setContext } from "svelte";
 
 
 class SDK {
+  static remove(target:DisplayObject, destroy:boolean=false){
+    if(destroy){
+      target.removeAllListeners();
+      if(target instanceof Sprite && target.texture){
+        target.texture.removeAllListeners();
+      }
+    }
+    if(!target.parent) return;
+    let parent = target.parent;
+    parent.removeChild(target);
+    target.emit(ContextEV.DisplayobjectRemove, parent);
+  }
   static async safeLoad(url:string){
     const base = BaseTexture.from(url, {});
     return await this.checkRes(base, ()=>{
@@ -139,7 +151,8 @@ class ComponentEV{
 }
 
 const ContextEV = {
-  TransformChanged: "transform:changed"
+  TransformChanged: "transform:changed",
+  DisplayobjectRemove: "Displayobject:Remove"
 }
 const ContextKEY = {
   _Container: Symbol("_Container")
@@ -176,38 +189,39 @@ class _Transform extends Transform{
 }
 
 class Mounter{
-  key: Symbol
-  target: DisplayObject
+  static key: Symbol | null = ContextKEY._Container
+  target: Container | null
+  parent: Container | null
   _onMount: (...args:any)=>void | null
-  constructor(target:DisplayObject, key=ContextKEY._Container){
-    this.key = key;
-    this.target = target;
+  constructor(){ }
+  static create(target:DisplayObject){
+    const parent = this.ctx as Container;
+    setContext(this.key, target);
+    let m = new Mounter();
+    m.target = target as Container; 
+    m.parent = parent;
+    return m;
   }
-  static create(target:DisplayObject, key=ContextKEY._Container){
-    return new Mounter(target, key).prepare();
-  }
-  prepare(){
-    setContext(this.key, this.target);
-    return this;
+  release(){
+    this.target = null;
+    this.parent = null;
   }
   onMount(cb:(...args:any)=>void){
     this._onMount = cb;
   }
   async mount(){
+    const {parent, target} = this;
+    this.release();
+    if(!parent || !target) return;
+    parent.addChild(target);
     // if(typeof(this._onMount) == "function" && isAsyncFunction(this._onMount)){
     //   this._onMount();
     // }
-    this._mount();
+    // this._mount();
   }
-  _mount(){
-    return;
+  static get ctx():DisplayObject{
     const parent = getContext(this.key) as Container;
-    if(parent){
-      parent.addChild(this.target);
-    }
-    else if(SDK.stage()){
-      (SDK.stage() as Container).addChild(this.target);
-    }
+    return parent || SDK.stage();
   }
 }
 
@@ -234,6 +248,8 @@ class _Sprite extends Sprite{
     this.transform = new _Transform(this as DisplayObject);
   }
 }
+
+
 
 export 
 { 

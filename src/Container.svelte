@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { getContext, onMount } from "svelte";
+  import { getContext, onDestroy, onMount } from "svelte";
   import { _Sprite, BaseTexture, _Container, Container, Mounter, Rectangle, SDK, Texture, ContextKEY } from "./sdk";
   
 
@@ -7,11 +7,16 @@
   export let x = 0;
   export let y = 0;
   const pixiTarget = Mounter.create(c);
-  console.log(getContext(ContextKEY._Container), this);
+  
   onMount(async () => {
-    
+    // console.log(c);
     pixiTarget.mount();
+    
   });
+  onDestroy(()=>{
+    SDK.remove(c, true);
+  })
+  
   $: {
     c.x = x;
     c.y = y;

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { getContext, onMount } from "svelte";
+  import { getContext, onDestroy, onMount } from "svelte";
   import { _Text, BaseTexture, Container, ContextKEY, Mounter, Rectangle, SDK, Texture } from "./sdk";
 
   class TextLike{
@@ -17,12 +17,16 @@
   export let y = 0;
   export let x = 0;
   let _ = new _Text();
-  const pixiTarget = Mounter.create(_);
   console.log(getContext(ContextKEY._Container), this);
+  const pixiTarget = Mounter.create(_);
+  
   onMount(async () => {
-   
+    console.log("Text");
     pixiTarget.mount();
   });
+  onDestroy(()=>{
+    SDK.remove(_, true);
+  })
   $: {
     _.text = new TextLike(text).content;
     _.style.fontSize = fontSize;

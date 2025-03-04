@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { getContext, onMount } from "svelte";
+  import { getContext, onDestroy, onMount } from "svelte";
   import { _Sprite, BaseTexture, Container, ContextKEY, Mounter, Rectangle, SDK, Texture } from "./sdk";
 
   export let url:string = "";
@@ -8,9 +8,11 @@
   export let sprite:_Sprite = new _Sprite();
   export let x = 0;
   export let y = 0;
+  
   const pixiTarget = Mounter.create(sprite);
-  console.log(getContext(ContextKEY._Container), this);
+  let ref;
   onMount(async () => {
+    
     let b:BaseTexture = await SDK.safeLoad(url);
     let texture:Texture = new Texture(b);
     sprite.texture = texture;
@@ -21,11 +23,16 @@
     texture.frame = newFrame;
     sprite.x = x;
     sprite.y = y;
-   
+    
+    console.log("Sprite");
     pixiTarget.mount();
   });
+
+  onDestroy(()=>{
+    SDK.remove(sprite, true);
+  })
 </script>
 
-<slot />
+<slot/>
 
 

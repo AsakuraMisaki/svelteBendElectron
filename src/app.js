@@ -13,11 +13,12 @@ class R{
     let ctx = new GlobalContext();
     ctx.stage = app.stage;
     GlobalContext.current = ctx;
+    globalThis.GlobalContext = GlobalContext.current;
     this.com();
   }
   static com(){
     setTimeout(()=>{
-      render("AA");
+      render("App");
     }, 300)
     
   } 
