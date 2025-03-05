@@ -53,6 +53,6 @@ const main = async function(cb){
   }
 } 
 
-// main();
+main();
 
 module.exports = { main };

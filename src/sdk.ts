@@ -157,6 +157,9 @@ const ContextEV = {
 const ContextKEY = {
   _Container: Symbol("_Container")
 }
+enum ContextSveltePIXIhidden{
+  AnchorIndex
+}
 class GlobalContext{
   static _current: GlobalContext;
   static set current(_:GlobalContext){
@@ -188,36 +191,119 @@ class _Transform extends Transform{
   }
 }
 
+function findMatchingParen(str, startIndex) {
+  let stack = 1; // 初始化为1，因为 startIndex 是左括号的位置
+  let inString = false; // 是否在字符串内
+  let stringQuote = ''; // 当前字符串的引号类型（'或"）
+  let escape = false; // 是否处于转义字符后
+
+  for (let i = startIndex + 1; i < str.length; i++) {
+    const char = str[i];
+
+    // 处理转义字符
+    if (escape) {
+      escape = false;
+      continue;
+    }
+
+    if (inString) {
+      if (char === '\\') {
+        escape = true;
+      } else if (char === stringQuote) {
+        inString = false;
+      }
+    } else {
+      switch (char) {
+        case '(':
+          stack++;
+          break;
+        case ')':
+          stack--;
+          if (stack === 0) return i;
+          break;
+        case '"':
+        case "'":
+          inString = true;
+          stringQuote = char;
+          break;
+      }
+    }
+  }
+  return -1; // 未找到匹配
+}
+
 class Mounter{
   static key: Symbol | null = ContextKEY._Container
   target: Container | null
   parent: Container | null
+  _anchor: Element | null
   _onMount: (...args:any)=>void | null
   constructor(){ }
+  anchor(a:Element){
+    this._anchor = a;
+    return this;
+  }
+  _create(target:DisplayObject){
+    const parent = Mounter.ctx as Container;
+    setContext(Mounter.key, target);
+    this.target = target as Container; 
+    this.parent = parent;
+    
+    this.target.$$sv_anchor = this._anchor;
+    return this;
+  }
   static create(target:DisplayObject){
-    const parent = this.ctx as Container;
-    setContext(this.key, target);
     let m = new Mounter();
-    m.target = target as Container; 
-    m.parent = parent;
+    m._create(target);
     return m;
   }
   release(){
     this.target = null;
     this.parent = null;
+    this._anchor = null;
   }
   onMount(cb:(...args:any)=>void){
     this._onMount = cb;
   }
   async mount(){
-    const {parent, target} = this;
+    let {parent, target, _anchor} = this;
+    let i;
+    if(_anchor && _anchor.parentNode){
+      console.log(_anchor);
+      i = Array.from(_anchor.parentNode.childNodes).indexOf(_anchor);
+      console.warn(i);
+    }
     this.release();
     if(!parent || !target) return;
-    parent.addChild(target);
-    // if(typeof(this._onMount) == "function" && isAsyncFunction(this._onMount)){
-    //   this._onMount();
-    // }
-    // this._mount();
+    this._mount(parent as Container, target as Container, i);
+  }
+  _mount(parent:Container, target:Container, ...svs:any){
+    let i0 = Mounter.getSVctx(ContextSveltePIXIhidden.AnchorIndex, target as DisplayObject);
+    let i1 = Mounter.getSVctx(ContextSveltePIXIhidden.AnchorIndex, parent as DisplayObject);
+    parent.addChild(target as DisplayObject);
+    if(i0 == undefined){
+      console.warn("child index can not be found, child would be added at last");
+    }
+    else if(i1 != undefined){
+      parent.children.sort((a:DisplayObject, b:DisplayObject)=>{
+        let ii:number = Mounter.getSVctx(ContextSveltePIXIhidden.AnchorIndex, a) || 0;
+        let iii:number = Mounter.getSVctx(ContextSveltePIXIhidden.AnchorIndex, b) || 0;
+        return (ii - iii);
+      })
+    }
+  }
+  static getSVctx(type:number, d:DisplayObject){
+    if(d.$$sv_anchor == undefined) return;
+    if(type === ContextSveltePIXIhidden.AnchorIndex){
+      let i = Array.from(d.$$sv_anchor.parentNode.childNodes).indexOf(d.$$sv_anchor);
+      return i || 0;
+    }
+  }
+  static setSVctx(type:number, d:DisplayObject, data:any){
+    if(type === ContextSveltePIXIhidden.AnchorIndex){
+      return d.$$sv_anchorIndex = data;
+    }
+    return data;
   }
   static get ctx():DisplayObject{
     const parent = getContext(this.key) as Container;

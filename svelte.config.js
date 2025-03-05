@@ -1,5 +1,5 @@
 // svelte.config.js
-export default {
+module.exports = {
   kit: {
     // 禁用自动生成根容器
     // compatibility: {

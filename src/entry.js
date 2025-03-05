@@ -9,6 +9,7 @@ const path = require("path");
 const sveltePreprocess = require("svelte-preprocess");
 const { log } = require("./env.js");
 const { writeFileSync } = require("fs");
+const { markComponentsPlugin } = require("./anchor.js");
 // const svelte = require("svelte");
 
 // // console.log(svelte);
@@ -23,9 +24,10 @@ const { writeFileSync } = require("fs");
 
 const buildCode = async function(argv, cb){
   argv.plugins = [
-    sveltePlugin({
-      preprocess: sveltePreprocess(),
-    }),
+    // sveltePlugin({
+    //   preprocess: sveltePreprocess(),
+    // }),
+    markComponentsPlugin
   ]
   try{
     const result = await esbuild.build(argv);
@@ -41,7 +43,7 @@ const buildCode = async function(argv, cb){
       // console.log(`--- Output for ${file.path} ---`);
       // console.log(file.contents.toString()); // 输出代码字符串
     });
-    log(JSON.stringify(codes));
+    // log(JSON.stringify(codes));
     if(cb){
       cb();
     }

@@ -8,7 +8,7 @@ const offline = document.createElement("div");
 const all = { App, AA };
 const render = (key)=>{
 	const app = mount(all[key], {
-		target: document.body,
+		target: offline,
 		
 	});
 }

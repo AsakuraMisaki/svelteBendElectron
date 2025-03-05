@@ -5,11 +5,13 @@
 
   import Text from "./Text.svelte";
   import Container from "./Container.svelte";
+  
   import { ContextKEY } from "./sdk";
+   
   let items = $state([]);
   let fps = $state(16);
   let now = performance.now();
-  const targetTick = 300;
+  const targetTick = 30;
   let tick = targetTick;
   const targetIcons = ["icon", "icon1", "icon2"];
   let t = () => {
@@ -21,8 +23,8 @@
     if (tick <= 0) {
       const r = Math.random();
       let text = undefined;
-      if (r < 0.5 && items.length) {
-        // items.shift();
+      if (r < 0 && items.length) {
+        items.shift();
       }
       else{
         text = r.toString();
@@ -37,9 +39,9 @@
         // items = [_item];
         // items[0] = _item;
         items.push(_item);
-        if(items.length > 1){
-          items.shift();
-        }
+        // if(items.length > 1){
+        //   items.shift();
+        // }
        
       }
       
@@ -58,15 +60,23 @@
     <Container x={item.x} y={item.y || 0}>
       {#if Number(item.text) > 0.7}
         <!-- Sprite的onMount会更慢被执行完 -->
-        <Sprite url={item.url || "./src/icon.png"}>
+        <Sprite url={"./src/icon.png"}>
         </Sprite> 
       {/if}
       <!-- Text的onMount会更快被执行完 -->
-      <Text text={item.text || ""} />
+      <Text text={item.text || ""} fontSize={50}/>
+      {#if Number(item.text) < 0.7}
+        <!-- Sprite的onMount会更慢被执行完 -->
+        <Sprite url={"./src/icon1.png"}>
+        </Sprite> 
+      {/if}
       <!-- 这种条件渲染的情况下，Text和Sprite组件如何正确获取组件本身在Container中的层级
-        比如Sprite的条件符合时，Sprite组件初始化函数中需要能获取到其位置即0
+        比如Sprite的条件符合时，Sprite组件初始化时能接收到相关位置参数
+        因为我需要将这个位置参数传递给Sprite组件的某些变量
+        不要显式说明该位置，需要自动获取
        -->
     </Container>
   {/each}
+  
   <Text y={500} x={50} text={`FPS: ${fps} ${items.length} ${performance.jsHeap}`}></Text>
 </div>
