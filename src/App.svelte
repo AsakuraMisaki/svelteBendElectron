@@ -7,7 +7,7 @@
   import Container from "./Container.svelte";
   
   import { ContextKEY } from "./sdk";
-   
+  var node = first_child();
   let items = $state([]);
   let fps = $state(16);
   let now = performance.now();
@@ -55,28 +55,22 @@
   });
 </script>
 
-<div>
-  {#each items as item}
-    <Container x={item.x} y={item.y || 0}>
-      {#if Number(item.text) > 0.7}
-        <!-- Sprite的onMount会更慢被执行完 -->
-        <Sprite url={"./src/icon.png"}>
-        </Sprite> 
-      {/if}
-      <!-- Text的onMount会更快被执行完 -->
-      <Text text={item.text || ""} fontSize={50}/>
-      {#if Number(item.text) < 0.7}
-        <!-- Sprite的onMount会更慢被执行完 -->
-        <Sprite url={"./src/icon1.png"}>
-        </Sprite> 
-      {/if}
-      <!-- 这种条件渲染的情况下，Text和Sprite组件如何正确获取组件本身在Container中的层级
-        比如Sprite的条件符合时，Sprite组件初始化时能接收到相关位置参数
-        因为我需要将这个位置参数传递给Sprite组件的某些变量
-        不要显式说明该位置，需要自动获取
-       -->
-    </Container>
-  {/each}
+{#each items as item}
+  <Container x={item.x} y={item.y || 0}>
+    {#if Number(item.text) > 0.7}
+      <!-- Sprite的onMount会更慢被执行完 -->
+      <Sprite url={"./src/icon.png"}>
+      </Sprite> 
+    {/if}
+    <!-- Text的onMount会更快被执行完 -->
+    <Text text={item.text || ""} fontSize={50}/>
+    {#if Number(item.text) < 0.7}
+      <!-- Sprite的onMount会更慢被执行完 -->
+      <Sprite url={"./src/icon1.png"}>
+      </Sprite> 
+    {/if}
+    
+  </Container>
+{/each}
   
-  <Text y={500} x={50} text={`FPS: ${fps} ${items.length} ${performance.jsHeap}`}></Text>
-</div>
+<Text y={500} x={50} text={`FPS: ${fps} ${items.length} ${performance.jsHeap}`}></Text>

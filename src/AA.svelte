@@ -33,26 +33,24 @@ onMount(()=>{
 
 </script>
 
-<div>
-  <!-- svelte层级问题 -->
-  <Container>
-    {#if someCon}
-      <!-- Sprite的onMount会更慢被执行完 -->
-      <Text text={"./src/icon.png"} y={60}>
-      </Text> 
-    {/if}
-    {#if someCon}
-      <!-- Sprite的onMount会更慢被执行完 -->
-      <Sprite url={"./src/icon.png"}>
-      </Sprite> 
-    {/if}
-    <!-- Text的onMount会更快被执行完 -->
-    <Text text={someCon} y={20}/>
-    <!-- 这种条件渲染的情况下，Text和Sprite组件如何正确获取组件本身在Container中的层级
-      比如Sprite的条件符合时，Sprite组件初始化时能接收到相关位置参数
-      因为我需要将这个位置参数传递给Sprite组件的某些变量
-      不要显式说明该位置，需要自动获取
-     -->
-  </Container>
-</div>
+<!-- svelte层级问题 -->
+<Container>
+  {#if someCon}
+    <!-- Sprite的onMount会更慢被执行完 -->
+    <Text text={"./src/icon.png"} y={60}>
+    </Text> 
+  {/if}
+  {#if someCon}
+    <!-- Sprite的onMount会更慢被执行完 -->
+    <Sprite url={"./src/icon.png"}>
+    </Sprite> 
+  {/if}
+  <!-- Text的onMount会更快被执行完 -->
+  <Text text={someCon} y={20}/>
+  <!-- 这种条件渲染的情况下，Text和Sprite组件如何正确获取组件本身在Container中的层级
+    比如Sprite的条件符合时，Sprite组件初始化时能接收到相关位置参数
+    因为我需要将这个位置参数传递给Sprite组件的某些变量
+    不要显式说明该位置，需要自动获取
+   -->
+</Container>
 

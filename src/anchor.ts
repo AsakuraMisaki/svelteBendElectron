@@ -63,38 +63,25 @@ function svelteCompliePostProcess(str, codeSign){
       })
     jj.find(j.CallExpression)
       .forEach((path)=>{
-        const p = path.node.callee.property;
-        if(p && p.name && p.name == "each"){
-            const a = path.node.arguments[path.node.arguments.length-1];
-            const a0 = a.params[a.params.length - 1];
-            console.log(jj.find(j.Identifier).filter({name:a0.name}).forEach((path)=>{
-                console.log(path);
-            }));
-            // j(a0.path).insertAfter(
-            //     j.expressionStatement(j.stringLiteral(`%%% ___I___ %%%`))
-            // )
-        }
-        else{
-            // if(path.node.callee.name && path.node.arguments && path.node.arguments[0])
-            // console.log(path.node.callee.name)
-            if (!path.node.callee.name) return;
-            const [a, prop] = path.node.arguments || [];
-            // console.log(a, prop);
-            if (!a || !prop) return;
-            if (!(/^node|^\$\$anchor/i.test(a.name))) return;
-            if (!(prop.type == j.ObjectExpression)) return;
-            if (!path.node.loc) return;
-            let preNode = findCloseNode_X(nodeDeclarations, path.node.loc.start.line);
-            console.log(path.node.callee.name, preNode);
-            // 在 VariableDeclaration 后插入新代码
-            j(path.parent).insertBefore(
-                // j(`${preNode.name}.___I___ = ${preNode.d}`)
-                j.expressionStatement(j.stringLiteral(`%%% ${preNode.name}.___I___ = ${preNode.d} + ___I___ %%%`))
-            )
-        }   
+        // if(path.node.callee.name && path.node.arguments && path.node.arguments[0])
+        // console.log(path.node.callee.name)
+        if(!path.node.callee.name) return;
+        const [a, prop] = path.node.arguments || [];
+        // console.log(a, prop);
+        if(!a || !prop) return;
+        if(!(/^node|^\$\$anchor/i.test(a.name))) return;
+        if(!(prop.type == j.ObjectExpression)) return;
+        if(!path.node.loc) return;
+        let preNode = findCloseNode_X(nodeDeclarations, path.node.loc.start.line);
+        console.log(path.node.callee.name, preNode);
+        // 在 VariableDeclaration 后插入新代码
+        j(path.parent).insertBefore(
+          // j(`${preNode.name}.___I___ = ${preNode.d}`)
+          j.expressionStatement(j.stringLiteral(`%%% ${preNode.name}.___I___ = ${preNode.d} + ___I___ %%%`))
+        )
       })
     let newC = jj.toSource();
-    // console.warn(newC);
+    console.warn(newC);
     return target[0] + "\n" + newC + "\n}";
     // console.log(jj);
   }

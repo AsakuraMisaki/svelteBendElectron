@@ -2,7 +2,7 @@
 // import { BuildOptions } from "esbuild";
 // import {default as sveltePlugin} from "esbuild-svelte";
 // import {sveltePreprocess} from "svelte-preprocess";
-
+require('ts-node/register');
 const esbuild = require("esbuild");
 const sveltePlugin = require("esbuild-svelte");
 const path = require("path");

@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "noImplicitAny": false, // 允许隐式的 any 类型
+    "strictNullChecks": false, // 忽略 null 和 undefined 的错误
+    "strict": false, // 关闭所有严格类型检查
+    "skipLibCheck": true, // 忽略库文件的类型检查
+    "allowJs": true, // 允许编译 JavaScript 文件
+    "noEmitOnError": false // 即使有错误也生成输出文件
+  }
+}

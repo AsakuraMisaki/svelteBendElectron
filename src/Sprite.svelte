@@ -15,6 +15,7 @@
   
   const pixiTarget = Mounter.create(sprite);
   
+  
   let ref;
   onMount(async () => {
     
@@ -38,8 +39,6 @@
   })
 </script>
 
-
-<slot/>
 
 
 <!-- App.svelte -->
