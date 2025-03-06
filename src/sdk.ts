@@ -10,7 +10,8 @@ import
   Transform, 
   Container, 
   DisplayObject, 
-  BaseTexture 
+  BaseTexture, 
+  Renderer
 } 
 from "pixi.js";
 import { getContext, setContext } from "svelte";
@@ -152,7 +153,8 @@ class ComponentEV{
 
 const ContextEV = {
   TransformChanged: "transform:changed",
-  DisplayobjectRemove: "Displayobject:Remove"
+  DisplayobjectRemove: "Displayobject:Remove",
+  ChildrenMount: "Children:Mount" 
 }
 const ContextKEY = {
   _Container: Symbol("_Container")
@@ -175,7 +177,8 @@ class GlobalContext{
 
 
 const globalEVS = new Map();
-
+globalEVS.set(ContextEV.TransformChanged, new Set());
+globalEVS.set(ContextEV.ChildrenMount, new Map());
 
 class _Transform extends Transform{
   constructor(s:DisplayObject){
@@ -185,7 +188,9 @@ class _Transform extends Transform{
   _scopeObject: DisplayObject
   onChange(): void {
     super.onChange();
-    globalEVS.forEach((value:any, key:DisplayObject)=>{
+    // Task:优化:布局/大小变化等侦听
+    const target = globalEVS.get(ContextEV.TransformChanged);
+    target.forEach((key:DisplayObject)=>{
       key.emit(ContextEV.TransformChanged, this._scopeObject);
     })
   }
@@ -232,15 +237,19 @@ function findMatchingParen(str, startIndex) {
   return -1; // 未找到匹配
 }
 
+// Task:优化:硬层级问题，pixi对象完全按xml元素层级进行层级分配，兼容async挂载，if/each等语句
 class Mounter{
   static key: Symbol | null = ContextKEY._Container
+  static temp: number = 0;
   target: Container | null
   parent: Container | null
   _anchor: Element | null
+  temp: number
   _onMount: (...args:any)=>void | null
   constructor(){ }
   anchor(a:Element){
     this._anchor = a;
+    
     return this;
   }
   _create(target:DisplayObject){
@@ -249,7 +258,12 @@ class Mounter{
     this.target = target as Container; 
     this.parent = parent;
     
-    this.target.$$sv_anchor = this._anchor;
+    this.target.___I___ = this._anchor.___I___; 
+    this.target.___tempI___ = Mounter.temp++;
+    // Task:bug 相同硬层级___I___如each语句兼容仍然有问题
+    // 比如<each><if><Sprite></if><Text></each>
+    // Sprite硬文档层级是1, 下次each中I是1而tempI也是1，总层级是2，而此时each中生成的Text仍然是层级2
+    // 一个处理是在anchor.js中还原对each语句的处理，获取当前each的次数*对应硬层级
     return this;
   }
   static create(target:DisplayObject){
@@ -278,32 +292,21 @@ class Mounter{
     this._mount(parent as Container, target as Container, i);
   }
   _mount(parent:Container, target:Container, ...svs:any){
-    let i0 = Mounter.getSVctx(ContextSveltePIXIhidden.AnchorIndex, target as DisplayObject);
-    let i1 = Mounter.getSVctx(ContextSveltePIXIhidden.AnchorIndex, parent as DisplayObject);
-    parent.addChild(target as DisplayObject);
-    if(i0 == undefined){
-      console.warn("child index can not be found, child would be added at last");
+    if(parent == SDK.stage()){
+      parent.addChild(target);
+      return;
     }
-    else if(i1 != undefined){
-      parent.children.sort((a:DisplayObject, b:DisplayObject)=>{
-        let ii:number = Mounter.getSVctx(ContextSveltePIXIhidden.AnchorIndex, a) || 0;
-        let iii:number = Mounter.getSVctx(ContextSveltePIXIhidden.AnchorIndex, b) || 0;
-        return (ii - iii);
-      })
+    let evScope = globalEVS.get(ContextEV.ChildrenMount).get(parent);
+    if(!evScope){
+      evScope = new Set();
     }
-  }
-  static getSVctx(type:number, d:DisplayObject){
-    if(d.$$sv_anchor == undefined) return;
-    if(type === ContextSveltePIXIhidden.AnchorIndex){
-      let i = Array.from(d.$$sv_anchor.parentNode.childNodes).indexOf(d.$$sv_anchor);
-      return i || 0;
-    }
-  }
-  static setSVctx(type:number, d:DisplayObject, data:any){
-    if(type === ContextSveltePIXIhidden.AnchorIndex){
-      return d.$$sv_anchorIndex = data;
-    }
-    return data;
+    evScope.add(target);
+    globalEVS.get(ContextEV.ChildrenMount).set(parent, evScope);
+    // parent.addChild(target as DisplayObject);
+    // if(i0 == undefined){
+    //   console.warn("child index can not be found, child would be added at last");
+    // }
+    
   }
   static get ctx():DisplayObject{
     const parent = getContext(this.key) as Container;
@@ -311,11 +314,31 @@ class Mounter{
   }
 }
 
+// Task:优化:用svelte.afterUpdate处理而非addChild或render时处理
+const RenderMount = function(){
+  let data:DisplayObject[] = globalEVS.get(ContextEV.ChildrenMount).get(this);
+  if(data){
+    this.addChild(...Array.from(data));
+    this.children.sort((a:DisplayObject, b:DisplayObject)=>{
+      let ii:number = a.___I___ || 0;
+      let iii:number = b.___I___ || 0;
+      if(ii === iii){
+        return a.___tempI___ - b.___tempI___;
+      }
+      return (ii - iii);
+    })
+    globalEVS.get(ContextEV.ChildrenMount).delete(this);
+  }
+}
 
 class _Container extends Container{
   constructor(){
     super();
     this.transform = new _Transform(this as DisplayObject);
+  }
+  render(renderer: Renderer): void {
+    super.render(renderer);
+    RenderMount.call(this);
   }
 }
 
@@ -325,6 +348,10 @@ class _Text extends Text{
     super(...args);
     this.transform = new _Transform(this as DisplayObject);
   }
+  render(renderer: Renderer): void {
+    super.render(renderer);
+    RenderMount.call(this);
+  }
 }
 
 
@@ -332,6 +359,10 @@ class _Sprite extends Sprite{
   constructor(...args:any[]){
     super(...args);
     this.transform = new _Transform(this as DisplayObject);
+  }
+  render(renderer: Renderer): void {
+    super.render(renderer);
+    RenderMount.call(this);
   }
 }
 

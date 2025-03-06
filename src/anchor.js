@@ -32,44 +32,54 @@ const preproessEach = function(path){
 
 }
 
+// Task:优化:硬层级问题核心，通过解析编译后js中组件-组件锚点分配语句，
+// 在组件初始化时自动分配#锚点在文档中的硬层级#给pixi对象
 function svelteCompliePostProcess(str, codeSign){
   // console.log(str);
   const target = str.split(codeSign);
-  
-  if(target && target[1] && /app/i.test(codeSign)){
-    let c = target[1].trim().replace(/\}.*$/, "");
+  let newC = target[1];
+  // console.log(codeSign);
+  if(newC){
+    let c = newC.trim().replace(/\}.*$/, "");
     const nodeDeclarations = [];
-    console.log(c);
     let jj = j(c);
-    jj.find(j.VariableDeclarator)
-      .forEach((path)=>{
-        // console.log(path.node.id && path.node.id.name)
-        if(path.node.id && /node_?\d*/i.test(path.node.id.name)){
-          // console.log(path.node.id.name);
-          let {name} = path.node.id;
-          let nd = /node_?(\d*)/i.exec(name);
-          let d = 0;
-          if(nd && nd[1]){
-            d = d[1];
-          }
+    // jj.find(j.VariableDeclarator)
+    //   .forEach((path)=>{
+    //     // console.log(path.node.id && path.node.id.name)
+    //     if(path.node.id && /node_?\d*/i.test(path.node.id.name)){
+    //       // console.log(path.node.id.name);
+    //       let {name} = path.node.id;
+    //       let nd = /node_?(\d*)/i.exec(name);
+    //       let d = 0;
+    //       if(nd && nd[1]){
+    //         d = nd[1];
+    //       }
           
-          nodeDeclarations.push({
-            name,
-            d,
-            line: path.node.loc.start.line,
-          });
+    //       nodeDeclarations.push({
+    //         name,
+    //         d,
+    //         line: path.node.loc.start.line,
+    //       });
           
-        }
-      })
+    //     }
+    //   })
+    // console.log(nodeDeclarations);
+    let d = 0;
     jj.find(j.CallExpression)
       .forEach((path)=>{
         const p = path.node.callee.property;
         if(p && p.name && p.name == "each"){
             const a = path.node.arguments[path.node.arguments.length-1];
             const a0 = a.params[a.params.length - 1];
-            console.log(jj.find(j.Identifier).filter({name:a0.name}).forEach((path)=>{
-                console.log(path);
-            }));
+            // console.log(a0);
+            // console.log(jj.find(j.Identifier, { name: a0.name }).forEach((path)=>{
+            //   if(path.node === a0){
+            //     j(path).insertAfter(
+            //       j.expressionStatement(j.stringLiteral(`%%% ___I___ %%%`))
+            //     )
+            //   }
+            //   // console.log(path.node === a0);
+            // }));
             // j(a0.path).insertAfter(
             //     j.expressionStatement(j.stringLiteral(`%%% ___I___ %%%`))
             // )
@@ -79,34 +89,41 @@ function svelteCompliePostProcess(str, codeSign){
             // console.log(path.node.callee.name)
             if (!path.node.callee.name) return;
             const [a, prop] = path.node.arguments || [];
-            // console.log(a, prop);
+            // console.log(nodeDeclarations);
+            // if(!nodeDeclarations.length) return;
             if (!a || !prop) return;
             if (!(/^node|^\$\$anchor/i.test(a.name))) return;
             if (!(prop.type == j.ObjectExpression)) return;
-            if (!path.node.loc) return;
-            let preNode = findCloseNode_X(nodeDeclarations, path.node.loc.start.line);
-            console.log(path.node.callee.name, preNode);
-            // 在 VariableDeclaration 后插入新代码
+            // if (!path.node.loc) return;
+            // let preNode = findCloseNode_X(nodeDeclarations, path.node.loc.start.line);
+            // let d = 0;
+            // if(!preNode && path.node.loc.start.line < nodeDeclarations[0].line){
+            //   // console.log(codeSign, target[1]);
+            // }
+            // else if(preNode){
+            //   d = preNode.d;
+            // }
+            
+            
             j(path.parent).insertBefore(
                 // j(`${preNode.name}.___I___ = ${preNode.d}`)
-                j.expressionStatement(j.stringLiteral(`%%% ${preNode.name}.___I___ = ${preNode.d} + ___I___ %%%`))
+                j.expressionStatement(j.stringLiteral(`%%% ${a.name}.___I___ = ${d++} %%%;`))
             )
         }   
       })
-    let newC = jj.toSource();
-    // console.warn(newC);
-    return target[0] + "\n" + newC + "\n}";
-    // console.log(jj);
+    newC = jj.toSource();
+    newC = newC.replace(/\"\%\%\%\s*/gi, "");
+    newC = newC.replace(/\s*\%\%\%\";/gi, "");
+    newC = newC.replace(/\s*\%\%\%;\";/gi, ";");
+    newC = "\n" + newC + "\n}";
+    
   }
-  const eachLike = str.replace(/\(\$\$anchor[^,]*,\s*item[^,]*\)\s*=>\s*{/, (match)=>{
-    // console.log(match);
-    const post = match.replace(/\)\s*=>\s*{/, (m)=>{
-      return `, __I__${m}`;
-    })
-    return post;
+  let a = target[0].replace(codeSign, "").replace(/Mounter\.create\s*/gi, (match)=>{
+    return `new Mounter().anchor($$anchor)._create`;
   });
-  const nodeLike = eachLike.replace(/var\s*node/);
-  return eachLike;
+  console.warn(newC);
+  let b = newC;
+  return a + b;
 }
 
 const markComponentsPlugin = {

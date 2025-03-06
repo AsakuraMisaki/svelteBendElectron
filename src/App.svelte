@@ -7,7 +7,7 @@
   import Container from "./Container.svelte";
   
   import { ContextKEY } from "./sdk";
-  var node = first_child();
+  
   let items = $state([]);
   let fps = $state(16);
   let now = performance.now();
@@ -57,14 +57,14 @@
 
 {#each items as item}
   <Container x={item.x} y={item.y || 0}>
-    {#if Number(item.text) > 0.7}
+    {#if true}
       <!-- Sprite的onMount会更慢被执行完 -->
       <Sprite url={"./src/icon.png"}>
       </Sprite> 
     {/if}
     <!-- Text的onMount会更快被执行完 -->
     <Text text={item.text || ""} fontSize={50}/>
-    {#if Number(item.text) < 0.7}
+    {#if true}
       <!-- Sprite的onMount会更慢被执行完 -->
       <Sprite url={"./src/icon1.png"}>
       </Sprite> 
@@ -73,4 +73,4 @@
   </Container>
 {/each}
   
-<Text y={500} x={50} text={`FPS: ${fps} ${items.length} ${performance.jsHeap}`}></Text>
+<Text y={400} x={50} text={`FPS: ${fps} ${items.length} ${performance.jsHeap}`} fontSize={60}></Text>
